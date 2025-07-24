@@ -8,9 +8,9 @@ export default function ProductPage() {
   useEffect(() => {
     const token = localStorage.getItem('jwt');
 
-    //axios.get('http://localhost:8080/products', {
+    axios.get('http://localhost:8080/products', {
     //axios.get('http://192.168.0.9:8080/products', {
-    axios.get('https://shopee-clone-backend-7ale.onrender.com/products', {
+    //axios.get('https://shopee-clone-backend-7ale.onrender.com/products', {
       headers: {
         Authorization: `Bearer ${token}`
       }

@@ -26,12 +26,22 @@ const handleLogin = async () => {
   }
 };
 
+const handleGoogleLogin = () => {
+    // Redirect browser to backend OAuth2 endpoint
+    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    // 🔹 change to your deployed backend URL if not running locally
+  };
+
   return (
     <div>
       <h2>Đăng nhập</h2>
       <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" />
       <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Password" />
       <button onClick={handleLogin}>Login</button>
+       <hr />
+      <button onClick={handleGoogleLogin} style={{ backgroundColor: '#db4437', color: 'white' }}>
+        Đăng nhập với Google
+      </button>
       <p>
         Chưa có tài khoản?{' '}
         <button onClick={() => navigate('/register')}>Đăng ký</button>

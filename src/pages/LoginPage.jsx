@@ -11,8 +11,8 @@ const navigate = useNavigate();
 
 const handleLogin = async () => {
   try {
-    const res = await axios.post('http://localhost:8080/api/auth/login', {
-    //const res = await axios.post('http://192.168.0.9:8080/api/auth/login', {
+    //const res = await axios.post('http://localhost:8080/api/auth/login', {
+    const res = await axios.post('/api/api/auth/login', {
     //const res = await axios.post('https://shopee-clone-backend-7ale.onrender.com/api/auth/login', {
       username,
       password,

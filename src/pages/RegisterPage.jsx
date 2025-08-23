@@ -22,8 +22,8 @@ function RegisterPage() {
     e.preventDefault();
     setError('');
     try {
-      await axios.post('http://localhost:8080/api/auth/register', formData);
-      //await axios.post('http://192.168.0.9:8080/api/auth/register', formData); 
+      //await axios.post('http://localhost:8080/api/auth/register', formData);
+      await axios.post('/api/api/auth/register', formData); 
       //await axios.post('https://shopee-clone-backend-7ale.onrender.com/api/auth/register', formData);
       navigate('/');
     } catch (err) {

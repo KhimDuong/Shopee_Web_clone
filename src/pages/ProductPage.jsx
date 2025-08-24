@@ -1,27 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../axiosInstance";
 
-/** Read image URL no matter if backend returns snake_case or camelCase */
+// Prefer snake_case from backend but accept camelCase too (future-proof)
 const getImg = (p) => p.image_url || p.imageUrl || "";
-
-/** Minimal cart helpers (localStorage) */
-function getCart() {
-  try {
-    const raw = localStorage.getItem("cart");
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-function setCart(next) {
-  localStorage.setItem("cart", JSON.stringify(next));
-}
 
 export default function ProductPage() {
   const [products, setProducts] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
 
-  // Add-new-item form
+  // Add-new-item form state
   const [showForm, setShowForm] = useState(false);
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState("");
@@ -32,7 +19,7 @@ export default function ProductPage() {
     description: "",
   });
 
-  // "Added to cart" toast-ish message
+  // Lightweight toast message when adding to cart
   const [addMsg, setAddMsg] = useState("");
 
   useEffect(() => {
@@ -68,7 +55,7 @@ export default function ProductPage() {
 
     setCreating(true);
     try {
-      // IMPORTANT: use snake_case to match your DB/backend
+      // Send snake_case because your backend exposes getImage_url()
       const payload = {
         name,
         price: priceNum,
@@ -96,29 +83,23 @@ export default function ProductPage() {
     }
   };
 
-  const handleAddToCart = (p) => {
-    const cart = getCart();
-    const idx = cart.findIndex((c) => c.id === p.id);
-    if (idx >= 0) {
-      cart[idx].qty += 1;
-    } else {
-      cart.push({
-        id: p.id,
-        name: p.name,
-        price: Number(p.price) || 0,
-        image_url: getImg(p),
-        qty: 1,
-      });
+  const handleAddToCart = async (p) => {
+    try {
+      await api.post("/cart", { productId: p.id, quantity: 1 });
+      setAddMsg(`Added "${p.name}" to cart`);
+      clearTimeout(handleAddToCart._t);
+      handleAddToCart._t = setTimeout(() => setAddMsg(""), 1600);
+      // Tell Header to refresh its badge
+      window.dispatchEvent(new Event("cart-updated"));
+    } catch (e) {
+      console.error(e);
+      alert("Failed to add to cart.");
     }
-    setCart(cart);
-    setAddMsg(`Added "${p.name}" to cart`);
-    clearTimeout(handleAddToCart._t);
-    handleAddToCart._t = setTimeout(() => setAddMsg(""), 1600);
   };
 
   return (
     <div style={{ maxWidth: 1200, margin: "30px auto", padding: "0 16px" }}>
-      {/* Header row */}
+      {/* Top bar */}
       <div
         style={{
           display: "flex",
@@ -314,7 +295,7 @@ export default function ProductPage() {
         </form>
       )}
 
-      {/* List */}
+      {/* Grid */}
       {loadingList && <p>Loading products…</p>}
       {!loadingList && products.length === 0 && (
         <p style={{ color: "#6b7280" }}>No products found.</p>
@@ -340,10 +321,8 @@ export default function ProductPage() {
               background: "#fff",
               display: "flex",
               flexDirection: "column",
-              transition: "box-shadow 0.2s",
             }}
           >
-            {/* Image */}
             {getImg(p) ? (
               <img
                 src={getImg(p)}
@@ -371,7 +350,6 @@ export default function ProductPage() {
               </div>
             )}
 
-            {/* Content */}
             <div style={{ padding: 12, flexGrow: 1 }}>
               <h3 style={{ margin: "4px 0", fontSize: 16 }}>{p.name}</h3>
               {p.description && (
@@ -402,7 +380,6 @@ export default function ProductPage() {
               </p>
             </div>
 
-            {/* Actions */}
             <div
               style={{
                 padding: 12,

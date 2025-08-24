@@ -1,37 +1,33 @@
-// src/components/Header.jsx
 import { isAuthed, clearToken } from "../auth";
 import { useNavigate, Link } from "react-router-dom";
-import { FaShoppingCart } from "react-icons/fa";
 import { useEffect, useState } from "react";
-
-function getCartCount() {
-  try {
-    const raw = localStorage.getItem("cart");
-    if (!raw) return 0;
-    const items = JSON.parse(raw);
-    return items.reduce((sum, c) => sum + c.qty, 0);
-  } catch {
-    return 0;
-  }
-}
+import api from "../axiosInstance";
 
 export default function Header() {
   const authed = isAuthed();
   const navigate = useNavigate();
-  const [cartCount, setCartCount] = useState(getCartCount());
+  const [cartCount, setCartCount] = useState(0);
 
   const handleLogout = () => {
     clearToken();
     navigate("/", { replace: true });
   };
 
-  // Listen for cart changes across the app
   useEffect(() => {
-    const syncCart = () => setCartCount(getCartCount());
-    window.addEventListener("storage", syncCart);
-    // also update when this component mounts
-    syncCart();
-    return () => window.removeEventListener("storage", syncCart);
+    const loadCount = () => {
+      api
+        .get("/cart")
+        .then((res) => {
+          const items = res.data || [];
+          setCartCount(items.reduce((sum, i) => sum + i.qty, 0));
+        })
+        .catch(() => setCartCount(0));
+    };
+    loadCount();
+
+    const onUpdate = () => loadCount();
+    window.addEventListener("cart-updated", onUpdate);
+    return () => window.removeEventListener("cart-updated", onUpdate);
   }, []);
 
   return (
@@ -48,32 +44,20 @@ export default function Header() {
         Shopie
       </Link>
 
-      <div
-        style={{
-          marginLeft: "auto",
-          display: "flex",
-          gap: 16,
-          alignItems: "center",
-        }}
-      >
+      <div style={{ marginLeft: "auto", display: "flex", gap: 16, alignItems: "center" }}>
         {authed ? (
           <>
             <Link to="/products" style={{ padding: "6px 10px" }}>
               Products
             </Link>
 
-            {/* Cart with icon + count badge */}
+            {/* Cart icon + badge (no external deps) */}
             <Link
               to="/cart"
-              style={{
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "6px 10px",
-              }}
+              style={{ position: "relative", display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", textDecoration: "none" }}
+              aria-label="Cart"
             >
-              <FaShoppingCart size={20} />
+              <span style={{ fontSize: 18 }}>🛒</span>
               {cartCount > 0 && (
                 <span
                   style={{
@@ -90,6 +74,7 @@ export default function Header() {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
+                  aria-label={`${cartCount} items in cart`}
                 >
                   {cartCount}
                 </span>
@@ -98,15 +83,7 @@ export default function Header() {
 
             <button
               onClick={handleLogout}
-              style={{
-                padding: "8px 12px",
-                background: "#ef4444",
-                color: "#fff",
-                border: 0,
-                borderRadius: 8,
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
+              style={{ padding: "8px 12px", background: "#ef4444", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", fontWeight: 600 }}
             >
               Logout
             </button>

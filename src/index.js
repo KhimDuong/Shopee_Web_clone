@@ -9,3 +9,9 @@ root.render(
     <App />
   </HelmetProvider>
 );
+
+window.addEventListener("storage", (e) => {
+  if (e.key === "logout_at") {
+    window.location.replace("/");
+  }
+});

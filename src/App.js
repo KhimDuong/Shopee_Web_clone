@@ -1,34 +1,53 @@
-import './App.css';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import PrivateRoute from './components/PrivateRoute';
-import ProductPage from './pages/ProductPage';
-import RegisterPage from './pages/RegisterPage';
+import "./App.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import Header from "./components/Header";
+import PublicRoute from "./components/PublicRoute";
+import PrivateRoute from "./components/PrivateRoute";
 
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ProductPage from "./pages/ProductPage";
+import CartPage from "./pages/CartPage";
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LoginPage />} />
-
-            <Route path="/register" element={<RegisterPage />} />
-            
-            <Route
-            path="/products"
-            element={
-              <PrivateRoute>
-                <ProductPage />
-              </PrivateRoute>
-            }
-/>
-          </Routes>
-        </BrowserRouter>
-
-
-
+      <Header />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <RegisterPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <PrivateRoute>
+              <ProductPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+            <PrivateRoute>
+              <CartPage />
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;

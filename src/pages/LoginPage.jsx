@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import api from "../axiosInstance";
+import { setToken, isAuthed } from "../auth";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
-
-// Simple brand logo (shopping bag + S)
+// inline brand & Google icons (no files needed)
 function Brand({ size = 28, label = "Shopie" }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -19,12 +18,10 @@ function Brand({ size = 28, label = "Shopie" }) {
         <path fill="url(#g)" d="M12 18c0-6 5-10 12-10s12 4 12 10h-4c0-3.9-3.6-6-8-6s-8 2.1-8 6h-4z" />
         <path fill="#fff" d="M27.8 31.9c0 1.7-1.5 3-4 3-1.7 0-3.6-.6-5-1.6l1.5-2.8c1.1.8 2.4 1.3 3.6 1.3 1 0 1.5-.3 1.5-.8 0-1.7-6-1-6-5.2 0-2.2 1.9-3.9 4.9-3.9 1.6 0 3.3.5 4.6 1.3l-1.3 2.8c-1-.6-2.2-1-3.2-1-1 0-1.6.4-1.6.9 0 1.7 6 1.1 6 5.6z"/>
       </svg>
-      <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: 0.2 }}>{label}</span>
+      <span style={{ fontWeight: 800, fontSize: 18 }}>{label}</span>
     </div>
   );
 }
-
-// Google "G" icon
 function GoogleIcon({ size = 18 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
@@ -45,7 +42,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     document.title = "Log in | Shopie";
-  }, []);
+    if (isAuthed()) {
+      navigate("/products", { replace: true });
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,11 +54,11 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const res = await axios.post(`${API_BASE}/api/auth/login`, { username, password });
+      const res = await api.post("/api/auth/login", { username, password });
       const token = res?.data?.token;
       if (!token) throw new Error("Missing token");
-      localStorage.setItem("jwt", token);
-      navigate("/products");
+      setToken(token);
+      navigate("/products", { replace: true });
     } catch (err) {
       setError("Incorrect username/password or connection error.");
     } finally {
@@ -67,7 +67,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${API_BASE}/oauth2/authorization/google`;
+    window.location.href = `${api.defaults.baseURL}/oauth2/authorization/google`;
   };
 
   return (
@@ -107,25 +107,15 @@ export default function LoginPage() {
           />
         </label>
 
-        {error && (
-          <div role="alert" aria-live="polite" style={{ color: "crimson", marginTop: 10 }}>
-            {error}
-          </div>
-        )}
+        {error && <div role="alert" aria-live="polite" style={{ color: "crimson", marginTop: 10 }}>{error}</div>}
 
         <button
           type="submit"
           disabled={submitting}
           style={{
-            width: "100%",
-            marginTop: 16,
-            padding: "10px 12px",
-            background: submitting ? "#bbb" : "#FF4D4F",
-            color: "#fff",
-            border: 0,
-            borderRadius: 10,
-            cursor: submitting ? "not-allowed" : "pointer",
-            fontWeight: 600,
+            width: "100%", marginTop: 16, padding: "10px 12px",
+            background: submitting ? "#bbb" : "#FF4D4F", color: "#fff",
+            border: 0, borderRadius: 10, cursor: submitting ? "not-allowed" : "pointer", fontWeight: 600
           }}
         >
           {submitting ? "Signing in…" : "Log in"}
@@ -139,22 +129,12 @@ export default function LoginPage() {
       <button
         onClick={handleGoogleLogin}
         style={{
-          width: "100%",
-          padding: "10px 12px",
-          backgroundColor: "#fff",
-          color: "#111827",
-          border: "1px solid #e5e7eb",
-          borderRadius: 10,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          fontWeight: 600,
+          width: "100%", padding: "10px 12px", backgroundColor: "#fff", color: "#111827",
+          border: "1px solid #e5e7eb", borderRadius: 10, cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontWeight: 600
         }}
       >
-        <GoogleIcon />
-        Continue with Google
+        <GoogleIcon /> Continue with Google
       </button>
 
       <p style={{ marginTop: 12 }}>

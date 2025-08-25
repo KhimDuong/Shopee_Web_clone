@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../axiosInstance";
 
 const getImg = (x) => x.image_url || x.imageUrl || "";
@@ -7,6 +8,7 @@ export default function CartPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState("");
+  const navigate = useNavigate();
 
   const load = () =>
     api
@@ -38,17 +40,17 @@ export default function CartPage() {
   };
 
   const removeItem = async (productId) => {
-  try {
-    await api.delete(`/api/cart/${productId}`);
-    await load();
-    window.dispatchEvent(new Event("cart-updated"));
-  } catch (e) {
-    console.error("DELETE /cart failed", e?.response || e);
-    const s = e?.response?.status;
-    const m = e?.response?.data?.message || e?.message;
-    alert(`Failed to remove item. ${s ? `Status ${s}.` : ""} ${m || ""}`);
-  }
-};
+    try {
+      await api.delete(`/api/cart/${productId}`);
+      await load();
+      window.dispatchEvent(new Event("cart-updated"));
+    } catch (e) {
+      console.error("DELETE /cart failed", e?.response || e);
+      const s = e?.response?.status;
+      const m = e?.response?.data?.message || e?.message;
+      alert(`Failed to remove item. ${s ? `Status ${s}.` : ""} ${m || ""}`);
+    }
+  };
 
   const total = items.reduce((s, i) => s + i.price * i.qty, 0);
 
@@ -112,6 +114,20 @@ export default function CartPage() {
       {items.length > 0 && (
         <div style={{ marginTop: 20, textAlign: "right" }}>
           <h3>Total: ${total.toFixed(2)}</h3>
+          <button
+            onClick={() => navigate("/order", { state: { cartItems : items } })}
+            style={{
+              background: "#3b82f6",
+              color: "#fff",
+              border: 0,
+              padding: "8px 16px",
+              borderRadius: 6,
+              cursor: "pointer",
+              marginTop: 10,
+            }}
+          >
+            Proceed to Checkout
+          </button>
         </div>
       )}
     </div>

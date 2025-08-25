@@ -9,6 +9,9 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProductPage from "./pages/ProductPage";
 import CartPage from "./pages/CartPage";
+import OrderPage from "./pages/OrderPage";
+import OrderHistoryPage from "./pages/OrderHistoryPage";
+import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 
 export default function App() {
   return (
@@ -47,6 +50,31 @@ export default function App() {
             </PrivateRoute>
           }
         />
+        <Route 
+          path="/order" 
+          element={
+            <PrivateRoute>
+              <OrderPage />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/orderHistory" 
+          element={
+            <PrivateRoute>
+              <OrderHistoryPage />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/orderConfirmation" 
+          element={
+            <PrivateRoute>
+              <OrderConfirmationPage />
+            </PrivateRoute>
+          } 
+        />
+
       </Routes>
     </BrowserRouter>
   );

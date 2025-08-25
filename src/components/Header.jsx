@@ -133,6 +133,18 @@ export default function Header() {
               )}
             </Link>
 
+            <Link
+              to="/orderHistory"
+              style={{
+                padding: "6px 10px",
+                textDecoration: "none",
+                fontWeight: 500,
+                color: "#374151",
+              }}
+            >
+              🕒
+            </Link>
+
             <button
               onClick={handleLogout}
               style={{

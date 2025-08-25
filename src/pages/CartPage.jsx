@@ -10,7 +10,7 @@ export default function CartPage() {
 
   const load = () =>
     api
-      .get("/cart")
+      .get("/api/cart")
       .then((res) => {
         setItems(res.data || []);
         setErrMsg("");
@@ -28,7 +28,7 @@ export default function CartPage() {
 
   const updateQty = async (productId, qty) => {
     try {
-      await api.put(`/cart/${productId}`, { quantity: qty });
+      await api.put(`/api/cart/${productId}`, { quantity: qty });
       await load();
       window.dispatchEvent(new Event("cart-updated"));
     } catch (e) {
@@ -39,7 +39,7 @@ export default function CartPage() {
 
   const removeItem = async (productId) => {
   try {
-    await api.delete(`/cart/${productId}`);
+    await api.delete(`/api/cart/${productId}`);
     await load();
     window.dispatchEvent(new Event("cart-updated"));
   } catch (e) {

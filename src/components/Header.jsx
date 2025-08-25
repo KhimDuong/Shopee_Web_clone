@@ -1,34 +1,62 @@
 import { isAuthed, clearToken } from "../auth";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../axiosInstance";
 
 export default function Header() {
-  const authed = isAuthed();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [authed, setAuthed] = useState(isAuthed());
   const [cartCount, setCartCount] = useState(0);
 
   const handleLogout = () => {
     clearToken();
+    try { localStorage.setItem("logout_at", String(Date.now())); } catch {}
     navigate("/", { replace: true });
   };
 
   useEffect(() => {
+    const syncAuth = () => setAuthed(isAuthed());
+    syncAuth();
+
+    const onAuthChanged = () => syncAuth();
+    const onStorage = (e) => {
+      if (e.key === "jwt" || e.key === "logout_at") syncAuth();
+    };
+    window.addEventListener("auth-changed", onAuthChanged);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("auth-changed", onAuthChanged);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
     const loadCount = () => {
+      if (!authed) {
+        setCartCount(0);
+        return;
+      }
       api
-        .get("/cart")
+        .get("/api/cart", { headers: { "X-Skip-Auth-Redirect": "1" } })
         .then((res) => {
           const items = res.data || [];
-          setCartCount(items.reduce((sum, i) => sum + i.qty, 0));
+          const total = items.reduce(
+            (sum, i) => sum + (Number(i.quantity ?? i.qty) || 0),
+            0
+          );
+          setCartCount(Number.isFinite(total) ? total : 0);
         })
         .catch(() => setCartCount(0));
     };
+
     loadCount();
 
     const onUpdate = () => loadCount();
     window.addEventListener("cart-updated", onUpdate);
     return () => window.removeEventListener("cart-updated", onUpdate);
-  }, []);
+  }, [authed]);
 
   return (
     <header
@@ -40,22 +68,46 @@ export default function Header() {
         gap: 12,
       }}
     >
-      <Link to="/" style={{ fontWeight: 800 }}>
-        Shopie
+      {/* ✅ Use favicon.ico instead of text */}
+      <Link to="/" style={{ display: "flex", alignItems: "center" }}>
+        <img
+          src="/favicon.ico"   // favicon.ico in public/ folder
+          alt="Shopie logo"
+          style={{ width: 28, height: 28 }}
+        />
       </Link>
 
       <div style={{ marginLeft: "auto", display: "flex", gap: 16, alignItems: "center" }}>
         {authed ? (
           <>
-            <Link to="/products" style={{ padding: "6px 10px" }}>
-              Products
+            <Link
+              to="/products"
+              style={{
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 10px",
+                textDecoration: "none",
+              }}
+              aria-label="Products"
+              title="Products"
+            >
+              <span style={{ fontSize: 18 }}>🛍️</span>
             </Link>
 
-            {/* Cart icon + badge (no external deps) */}
             <Link
               to="/cart"
-              style={{ position: "relative", display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", textDecoration: "none" }}
+              style={{
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 10px",
+                textDecoration: "none",
+              }}
               aria-label="Cart"
+              title="Cart"
             >
               <span style={{ fontSize: 18 }}>🛒</span>
               {cartCount > 0 && (
@@ -83,7 +135,15 @@ export default function Header() {
 
             <button
               onClick={handleLogout}
-              style={{ padding: "8px 12px", background: "#ef4444", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", fontWeight: 600 }}
+              style={{
+                padding: "8px 12px",
+                background: "#ef4444",
+                color: "#fff",
+                border: 0,
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: 600,
+              }}
             >
               Logout
             </button>

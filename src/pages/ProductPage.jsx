@@ -25,7 +25,7 @@ export default function ProductPage() {
   useEffect(() => {
     document.title = "Products | Shopie";
     api
-      .get("/products")
+      .get("/api/products/public")
       .then((res) => setProducts(res.data || []))
       .catch((err) => console.error(err))
       .finally(() => setLoadingList(false));
@@ -63,13 +63,14 @@ export default function ProductPage() {
         description: description || null,
       };
 
-      const res = await api.post("/products", payload);
+      // ✅ MUST use /api/products
+      const res = await api.post("/api/products", payload);
       const created = res?.data;
 
       if (created && created.id) {
         setProducts((prev) => [created, ...prev]);
       } else {
-        const list = await api.get("/products");
+        const list = await api.get("/api/products");
         setProducts(list.data || []);
       }
 
@@ -85,15 +86,16 @@ export default function ProductPage() {
 
   const handleAddToCart = async (p) => {
     try {
-      await api.post("/cart", { productId: p.id, quantity: 1 });
+      await api.post("/api/cart", { productId: p.id, quantity: 1 });
       setAddMsg(`Added "${p.name}" to cart`);
       clearTimeout(handleAddToCart._t);
       handleAddToCart._t = setTimeout(() => setAddMsg(""), 1600);
-      // Tell Header to refresh its badge
       window.dispatchEvent(new Event("cart-updated"));
     } catch (e) {
-      console.error(e);
-      alert("Failed to add to cart.");
+      const status = e?.response?.status || "network";
+      const msg = e?.response?.data?.message || e?.message || "Unknown error";
+      console.error("Add to cart failed:", status, msg);
+      alert(`Failed to add to cart (${status}): ${msg}`);
     }
   };
 

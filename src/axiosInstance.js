@@ -7,9 +7,10 @@ const api = axios.create({
   baseURL: API_BASE,
   timeout: 15000,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true, // keep cookies if you use them
 });
 
-// Attach JWT on every request
+// Attach Bearer on every request (normal login)
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("jwt");
@@ -19,18 +20,17 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Auto‑logout on 401/403
+// Auto‑logout on 401/403 unless caller opts out via X-Skip-Auth-Redirect
 api.interceptors.response.use(
   (res) => res,
   (error) => {
     const status = error?.response?.status;
-    if (status === 401 || status === 403) {
+    const skip = error?.config?.headers?.["X-Skip-Auth-Redirect"];
+    if ((status === 401 || status === 403) && !skip) {
       try {
         localStorage.removeItem("jwt");
-        // notify other tabs
         localStorage.setItem("logout_at", String(Date.now()));
       } catch {}
-      // drop history so Back won't return to protected page
       if (window.location.pathname !== "/") {
         window.location.replace("/");
       }
